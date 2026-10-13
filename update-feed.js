@@ -17,7 +17,6 @@ async function buildFeed() {
     const xmlText = await response.text();
     console.log(`Tamanho do texto XML baixado: ${xmlText.length} caracteres.`);
 
-    // Regex flexível para capturar <item> independentemente de maiúsculas/minúsculas
     const itemRegex = /<item\b[^>]*>([\s\S]*?)<\/item\b[^>]*>/gi;
     const items = [];
     let match;
@@ -25,9 +24,8 @@ async function buildFeed() {
     while ((match = itemRegex.exec(xmlText)) !== null) {
       const itemContent = match[1];
 
-      // Função auxiliar case-insensitive para extrair tags
       const getTagContent = (tagName) => {
-        const regex = new RegExp `<${tagName}[^>]*>([\\s\\S]*?)<\\/${tagName}>`, 'i';
+        const regex = new RegExp(`<${tagName}[^>]*>([\\s\\S]*?)<\\/${tagName}>`, 'i');
         const m = itemContent.match(regex);
         if (!m) return '';
         return m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, '\$1').trim();
@@ -63,7 +61,6 @@ async function buildFeed() {
         }
       }
 
-      // Captura imagens de tags de mídia ou enclosure
       const mediaMatch = itemContent.match(/<media:content[^>]+url="([^">]+)"/i);
       const enclosureMatch = itemContent.match(/<enclosure[^>]+url="([^">]+)"/i);
       const imgMatch = description.match(/<img[^>]+src="([^">]+)"/i);
@@ -84,7 +81,6 @@ async function buildFeed() {
 
     console.log(`Total de posts encontrados com sucesso: ${items.length}`);
 
-    // Salva o feed.json na raiz do repositório
     fs.writeFileSync('feed.json', JSON.stringify(items, null, 2), 'utf-8');
     console.log('Arquivo feed.json salvo com sucesso!');
   } catch (err) {
