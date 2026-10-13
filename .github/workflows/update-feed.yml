@@ -2,9 +2,8 @@ name: Atualizar Feed RSS da AMPAR-DF
 
 on:
   schedule:
-    # Executa a cada 6 horas automaticamente
     - cron: '0 */6 * * *'
-  workflow_dispatch: # Permite rodar manualmente pelo painel do GitHub
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -20,10 +19,7 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-
-      - name: Instalar dependências
-        run: npm install
+          node-version: '22'
 
       - name: Gerar feed.json
         run: node update-feed.js
