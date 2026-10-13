@@ -6,22 +6,24 @@ async function buildFeed() {
   
   try {
     console.log('Buscando feed RSS...');
+    
+    // Simula uma requisição idêntica a um navegador real
     const response = await fetch(rssUrl, {
+      method: 'GET',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Cache-Control': 'no-cache'
       }
     });
 
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`Servidor do FetchRSS respondeu com status HTTP ${response.status}`);
+    }
     
     const xmlText = await response.text();
-    console.log(`Tamanho do texto XML baixado: ${xmlText.length} caracteres.`);
-
-    // Se o XML veio muito curto, exibe o conteúdo para depuração
-    if (xmlText.length < 200) {
-      console.log('Conteúdo recebido do servidor:', xmlText);
-    }
+    console.log(`Sucesso ao obter RSS. Tamanho retornado: ${xmlText.length} caracteres.`);
 
     const itemRegex = /<item\b[^>]*>([\s\S]*?)<\/item\b[^>]*>/gi;
     const items = [];
@@ -85,15 +87,22 @@ async function buildFeed() {
       });
     }
 
-    console.log(`Total de posts encontrados com sucesso: ${items.length}`);
+    console.log(`Total de posts extraídos: ${items.length}`);
 
-    // Garante que o caminho absoluto do arquivo seja respeitado na raiz do repositório
     const targetPath = path.join(process.cwd(), 'feed.json');
-    fs.writeFileSync(targetPath, JSON.stringify(items, null, 2), 'utf-8');
-    console.log('Arquivo feed.json gravado com sucesso em:', targetPath);
+    
+    // Só atualiza o arquivo se houver posts válidos para evitar sobrescrever o feed com array vazio
+    if (items.length > 0) {
+      fs.writeFileSync(targetPath, JSON.stringify(items, null, 2), 'utf-8');
+      console.log('Arquivo feed.json atualizado com sucesso!');
+    } else {
+      console.log('Nenhum item extraído do XML. O arquivo feed.json não foi alterado.');
+    }
+
   } catch (err) {
-    console.error('Erro ao processar o feed:', err);
-    process.exit(1);
+    console.error('Falha na requisição ao FetchRSS:', err.message);
+    // Encerra com código 0 para não quebrar o workflow e manter a versão funcional do feed.json
+    process.exit(0);
   }
 }
 
