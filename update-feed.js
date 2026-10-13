@@ -4,12 +4,10 @@ async function buildFeed() {
   const rssUrl = 'https://fetchrss.com/feed/1xEZ2V3kH5kB1xEZ1JGKt8x9.rss';
   
   try {
-    console.log('Buscando feed RSS com cabeçalhos simulados...');
-    
-    // Adicionamos headers para o FetchRSS entender que a requisição vem de um navegador legítimo
+    console.log('Buscando feed RSS...');
     const response = await fetch(rssUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8'
       }
     });
@@ -17,18 +15,19 @@ async function buildFeed() {
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     
     const xmlText = await response.text();
-    console.log(`Tamanho do XML baixado: ${xmlText.length} caracteres`);
+    console.log(`Tamanho do texto XML baixado: ${xmlText.length} caracteres.`);
 
-    // Extrai cada bloco <item>...</item> do XML usando regex
-    const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+    // Regex flexível para capturar <item> independentemente de maiúsculas/minúsculas
+    const itemRegex = /<item\b[^>]*>([\s\S]*?)<\/item\b[^>]*>/gi;
     const items = [];
     let match;
 
     while ((match = itemRegex.exec(xmlText)) !== null) {
       const itemContent = match[1];
 
-      const getTagContent = (tag) => {
-        const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i');
+      // Função auxiliar case-insensitive para extrair tags
+      const getTagContent = (tagName) => {
+        const regex = new RegExp `<${tagName}[^>]*>([\\s\\S]*?)<\\/${tagName}>`, 'i';
         const m = itemContent.match(regex);
         if (!m) return '';
         return m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, '\$1').trim();
@@ -64,6 +63,7 @@ async function buildFeed() {
         }
       }
 
+      // Captura imagens de tags de mídia ou enclosure
       const mediaMatch = itemContent.match(/<media:content[^>]+url="([^">]+)"/i);
       const enclosureMatch = itemContent.match(/<enclosure[^>]+url="([^">]+)"/i);
       const imgMatch = description.match(/<img[^>]+src="([^">]+)"/i);
@@ -82,13 +82,13 @@ async function buildFeed() {
       });
     }
 
-    console.log(`Total de posts encontrados: ${items.length}`);
+    console.log(`Total de posts encontrados com sucesso: ${items.length}`);
 
-    // Salva o feed.json
+    // Salva o feed.json na raiz do repositório
     fs.writeFileSync('feed.json', JSON.stringify(items, null, 2), 'utf-8');
-    console.log('Arquivo feed.json gerado com sucesso!');
+    console.log('Arquivo feed.json salvo com sucesso!');
   } catch (err) {
-    console.error('Erro fatal ao gerar feed:', err);
+    console.error('Erro ao processar o feed:', err);
     process.exit(1);
   }
 }
