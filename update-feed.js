@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 
 async function buildFeed() {
   const rssUrl = 'https://fetchrss.com/feed/1xEZ2V3kH5kB1xEZ1JGKt8x9.rss';
@@ -7,7 +8,7 @@ async function buildFeed() {
     console.log('Buscando feed RSS...');
     const response = await fetch(rssUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8'
       }
     });
@@ -16,6 +17,11 @@ async function buildFeed() {
     
     const xmlText = await response.text();
     console.log(`Tamanho do texto XML baixado: ${xmlText.length} caracteres.`);
+
+    // Se o XML veio muito curto, exibe o conteúdo para depuração
+    if (xmlText.length < 200) {
+      console.log('Conteúdo recebido do servidor:', xmlText);
+    }
 
     const itemRegex = /<item\b[^>]*>([\s\S]*?)<\/item\b[^>]*>/gi;
     const items = [];
@@ -81,8 +87,10 @@ async function buildFeed() {
 
     console.log(`Total de posts encontrados com sucesso: ${items.length}`);
 
-    fs.writeFileSync('feed.json', JSON.stringify(items, null, 2), 'utf-8');
-    console.log('Arquivo feed.json salvo com sucesso!');
+    // Garante que o caminho absoluto do arquivo seja respeitado na raiz do repositório
+    const targetPath = path.join(process.cwd(), 'feed.json');
+    fs.writeFileSync(targetPath, JSON.stringify(items, null, 2), 'utf-8');
+    console.log('Arquivo feed.json gravado com sucesso em:', targetPath);
   } catch (err) {
     console.error('Erro ao processar o feed:', err);
     process.exit(1);
