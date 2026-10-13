@@ -1,0 +1,31 @@
+name: Atualizar Feed RSS da AMPAR-DF
+
+on:
+  schedule:
+    # Executa a cada 6 horas automaticamente
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Permite rodar manualmente pelo painel do GitHub
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Gerar feed.json
+        run: node update-feed.js
+
+      - name: Commitar e fazer push do feed.json atualizado
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add feed.json
+          git commit -m "chore: atualiza feed.json automaticamente" || exit 0
+          git push
