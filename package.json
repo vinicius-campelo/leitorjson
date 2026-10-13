@@ -1,0 +1,7 @@
+{
+  "name": "leitorjson",
+  "version": "1.0.0",
+  "dependencies": {
+    "jsdom": "^24.0.0"
+  }
+}
